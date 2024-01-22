@@ -1,0 +1,123 @@
+import pandas as pd
+from datetime import datetime, timedelta
+
+# User-defined parameters
+start_date_input = input("Введите начальную дату в формате ДД-ММ-ГГГГ: ")
+work_weeks_input = int(input("Введите количество рабочих недель в цикле: "))
+rest_weeks_input = int(input("Введите количество нерабочих недель в цикле: "))
+
+start_date = datetime.strptime(start_date_input, '%d-%m-%Y')
+work_weeks = work_weeks_input
+rest_weeks = rest_weeks_input
+
+# Initialize variables
+week_number = 1
+current_date = start_date - timedelta(days=start_date.weekday())
+data = []
+
+# Generate schedule for one year
+while current_date.year == start_date.year:
+    # Working weeks
+    for _ in range(work_weeks):
+        week_days = [current_date + timedelta(days=i) if current_date + timedelta(days=i) >= start_date else None for i in range(7)]
+        week_days_in_year = [day for day in week_days if day and day.year == start_date.year]
+        if week_days_in_year:
+            data.append({"Месяц": week_days_in_year[0].strftime('%m'), "Номер недели": week_number, "Статус": "Р", "Календарные дни": [day.day for day in week_days_in_year if day.weekday() < 5], "СБ/ВС": [day.day for day in week_days_in_year if day.weekday() >= 5]})
+            week_number += 1
+        current_date += timedelta(days=7)
+    # Rest weeks
+    for _ in range(rest_weeks):
+        week_days = [current_date + timedelta(days=i) if current_date + timedelta(days=i) >= start_date else None for i in range(7)]
+        week_days_in_year = [day for day in week_days if day and day.year == start_date.year]
+        if week_days_in_year:
+            data.append({"Месяц": week_days_in_year[0].strftime('%m'), "Номер недели": week_number, "Статус": "О", "Календарные дни": [day.day for day in week_days_in_year if day.weekday() < 5], "СБ/ВС": [day.day for day in week_days_in_year if day.weekday() >= 5]})
+            week_number += 1
+        current_date += timedelta(days=7)
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Replace month numbers with Russian names
+df['Месяц'] = df['Месяц'].replace({'01': 'Янв', '02': 'Фев', '03': 'Мар', '04': 'Апр', '05': 'Май', '06': 'Июн', '07': 'Июл', '08': 'Авг', '09': 'Сен', '10': 'Окт', '11': 'Ноя', '12': 'Дек'})
+
+# Print the table without the index
+print(df.to_string(index=False))
+
+# Calculate summary statistics
+summary = df.groupby('Месяц').agg({'Статус': ['count'], 'Календарные дни': [lambda x: sum(map(len, x))], 'СБ/ВС': [lambda x: sum(map(len, x))]})
+summary.columns = ['Кол-во недель', 'Всего дней Р', 'Всего дней О']
+summary = summary.reindex(['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'])
+summary.loc['ЗА ГОД'] = summary.sum()
+
+# Print the summary table
+print("\n")
+print(summary.to_string())
+
+----------------------------------------------------------------------
+
+import pandas as pd
+from datetime import datetime, timedelta
+
+# User-defined parameters
+start_date_input = input("Введите начальную дату в формате ДД-ММ-ГГГГ: ")
+work_weeks_input = int(input("Введите количество рабочих недель в цикле: "))
+rest_weeks_input = int(input("Введите количество нерабочих недель в цикле: "))
+
+start_date = datetime.strptime(start_date_input, '%d-%m-%Y')
+work_weeks = work_weeks_input
+rest_weeks = rest_weeks_input
+
+# Initialize variables
+week_number = 1
+current_date = start_date - timedelta(days=start_date.weekday())
+data = []
+
+# Generate schedule for one year
+while current_date.year == start_date.year:
+    # Working weeks
+    for _ in range(work_weeks):
+        week_days = [current_date + timedelta(days=i) if current_date + timedelta(days=i) >= start_date else None for i in range(7)]
+        week_days_in_year = [day for day in week_days if day and day.year == start_date.year]
+        if week_days_in_year:
+            for day in week_days_in_year:
+                data.append({"Месяц": day.strftime('%m'), "Номер недели": week_number, "Статус": "Р", "День": day.day, "День недели": day.weekday()})
+            week_number += 1
+        current_date += timedelta(days=7)
+    # Rest weeks
+    for _ in range(rest_weeks):
+        week_days = [current_date + timedelta(days=i) if current_date + timedelta(days=i) >= start_date else None for i in range(7)]
+        week_days_in_year = [day for day in week_days if day and day.year == start_date.year]
+        if week_days_in_year:
+            for day in week_days_in_year:
+                data.append({"Месяц": day.strftime('%m'), "Номер недели": week_number, "Статус": "О", "День": day.day, "День недели": day.weekday()})
+            week_number += 1
+        current_date += timedelta(days=7)
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Replace month numbers with Russian names
+df['Месяц'] = df['Месяц'].replace({'01': 'Янв', '02': 'Фев', '03': 'Мар', '04': 'Апр', '05': 'Май', '06': 'Июн', '07': 'Июл', '08': 'Авг', '09': 'Сен', '10': 'Окт', '11': 'Ноя', '12': 'Дек'})
+
+# Calculate working and non-working days
+df['Рабочий день'] = (df['Статус'] == 'Р') & (df['День недели'] < 5)
+df['Нерабочий день'] = (df['Статус'] == 'О') | (df['День недели'] >= 5)
+
+# Group by month and calculate summary statistics
+summary = df.groupby('Месяц').agg({'Рабочий день': ['sum'], 'Нерабочий день': ['sum']}).reset_index()
+summary.columns = ['Месяц', 'Всего дней Р', 'Всего дней О']
+
+# Порядок месяцев
+months_order = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+summary['Месяц'] = pd.Categorical(summary['Месяц'], categories=months_order, ordered=True)
+summary = summary.sort_values('Месяц')
+
+# Добавить строку "ЗА ГОД" с подсчетом суммы по столбцам
+year_total = pd.DataFrame({'Месяц': ['ЗА ГОД'], 'Всего дней Р': [summary['Всего дней Р'].sum()], 'Всего дней О': [summary['Всего дней О'].sum()]})
+summary = pd.concat([summary, year_total], ignore_index=True)
+
+# Вывести итоговую статистическую таблицу
+print("\n")
+print(summary.to_string(index=False))
+
+
