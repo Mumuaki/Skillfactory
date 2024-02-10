@@ -1,0 +1,26 @@
+# Создаем пустое игровое поле 3x3
+game_board = [[' ' for _ in range(3)] for _ in range(3)]
+
+# Игроки по очереди делают ходы
+for i in range(9):
+    # Выводим игровое поле
+    for row in game_board:
+        print(f"| {' | '.join(row)} |")
+        print("-" * 11)
+    
+    # Определяем, кто сейчас ходит
+    player = 'X' if i % 2 == 0 else 'O'
+    print(f"Игрок {player}, ваш ход.")
+    
+    while True:
+        # Получаем координаты хода от игрока
+        row = int(input("Введите номер строки (0-2): "))
+        col = int(input("Введите номер столбца (0-2): "))
+        
+        # Проверяем, является ли ход допустимым
+        if 0 <= row < 3 and 0 <= col < 3 and game_board[row][col] == ' ':
+            # Если ход допустим, делаем его и выходим из цикла
+            game_board[row][col] = player
+            break
+        else:
+            print("Недопустимый ход. Попробуйте еще раз.")
