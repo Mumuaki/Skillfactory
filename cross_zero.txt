@@ -1,26 +1,51 @@
-# Создаем пустое игровое поле 3x3
-game_board = [[' ' for _ in range(3)] for _ in range(3)]
+def print_board(board):
+    print(" | 1 | 2 | 3 |")
+    print("-" * 13)
+    for i, row in enumerate(board):
+        print(f"{i + 1}| {' | '.join(row)} |")
+        print("-" * 13)
+    print()
 
-# Игроки по очереди делают ходы
-for i in range(9):
-    # Выводим игровое поле
-    for row in game_board:
-        print(f"| {' | '.join(row)} |")
-        print("-" * 11)
-    
-    # Определяем, кто сейчас ходит
-    player = 'X' if i % 2 == 0 else 'O'
-    print(f"Игрок {player}, ваш ход.")
-    
+def check_winner(board, player):
+    # Проверяем строки
+    for row in board:
+        if all(cell == player for cell in row):
+            return True
+    # Проверяем столбцы
+    for col in range(3):
+        if all(board[row][col] == player for row in range(3)):
+            return True
+    # Проверяем диагонали
+    if all(board[i][i] == player for i in range(3)) or \
+       all(board[i][2 - i] == player for i in range(3)):
+        return True
+    return False
+
+def is_valid_move(board, row, col):
+    return 0 <= row < 3 and 0 <= col < 3 and board[row][col] == ' '
+
+def play_game():
+    board = [[' ' for _ in range(3)] for _ in range(3)]
+    current_player = 'X'
+
     while True:
-        # Получаем координаты хода от игрока
-        row = int(input("Введите номер строки (0-2): "))
-        col = int(input("Введите номер столбца (0-2): "))
-        
-        # Проверяем, является ли ход допустимым
-        if 0 <= row < 3 and 0 <= col < 3 and game_board[row][col] == ' ':
-            # Если ход допустим, делаем его и выходим из цикла
-            game_board[row][col] = player
-            break
+        print_board(board)
+        row = int(input(f"Игрок {current_player}, введите номер строки (от 1 до 3): ")) - 1
+        col = int(input(f"Игрок {current_player}, введите номер столбца (от 1 до 3): ")) - 1
+
+        if is_valid_move(board, row, col):
+            board[row][col] = current_player
+            if check_winner(board, current_player):
+                print_board(board)
+                print(f"Игрок {current_player} победил!")
+                break
+            elif all(cell != ' ' for row in board for cell in row):
+                print_board(board)
+                print("Ничья!")
+                break
+            else:
+                current_player = 'O' if current_player == 'X' else 'X'
         else:
-            print("Недопустимый ход. Попробуйте еще раз.")
+            print("Некорректный ход! Попробуйте снова.")
+
+play_game()
