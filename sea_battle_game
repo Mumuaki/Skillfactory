@@ -1,0 +1,92 @@
+import random
+
+class Ship:
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
+        self.size = len(coordinates)
+        self.hits = []
+
+    def is_hit(self, coordinate):
+        if coordinate in self.coordinates:
+            self.hits.append(coordinate)
+            return True
+        return False
+
+    def is_sunk(self):
+        return len(self.hits) == self.size
+
+class Board:
+    def __init__(self, ships):
+        self.ships = ships
+        self.shots = []
+        self.board = [['О' for _ in range(6)] for _ in range(6)]
+
+    def shoot(self, coordinate):
+        if coordinate in self.shots:
+            raise ValueError("Вы уже стреляли в эту клетку!")
+        self.shots.append(coordinate)
+        for ship in self.ships:
+            if ship.is_hit(coordinate):
+                self.board[coordinate[0]-1][coordinate[1]-1] = 'X'
+                return True
+        self.board[coordinate[0]-1][coordinate[1]-1] = 'T'
+        return False
+
+    def all_sunk(self):
+        return all(ship.is_sunk() for ship in self.ships)
+
+    def display(self):
+        print('  | 1 | 2 | 3 | 4 | 5 | 6 |')
+        for i in range(6):
+            print(str(i+1) + ' | ' + ' | '.join(self.board[i]) + ' |')
+
+def create_ships():
+    # Создаем корабли согласно заданным правилам
+    ships = []
+    ships.append(Ship([(1, 1), (1, 2), (1, 3)]))  # корабль на 3 клетки
+    ships.append(Ship([(3, 1), (3, 2)]))  # корабль на 2 клетки
+    ships.append(Ship([(5, 1), (5, 2)]))  # корабль на 2 клетки
+    for i in range(4):  # 4 корабля на одну клетку
+        ships.append(Ship([(i+2, 5)]))
+    return ships
+
+def game():
+    player_board = Board(create_ships())
+    ai_board = Board(create_ships())
+    player_turn = True
+
+    while not player_board.all_sunk() and not ai_board.all_sunk():
+        if player_turn:
+            # Ход игрока
+            x = int(input("Введите координату X: "))
+            y = int(input("Введите координату Y: "))
+            try:
+                hit = player_board.shoot((x, y))
+                if hit:
+                    print("Попадание!")
+                else:
+                    print("Промах!")
+                    player_turn = False
+            except ValueError as e:
+                print(e)
+            player_board.display()
+        else:
+            # Ход ИИ
+            x = random.randint(1, 6)
+            y = random.randint(1, 6)
+            while (x, y) in ai_board.shots:
+                x = random.randint(1, 6)
+                y = random.randint(1, 6)
+            hit = ai_board.shoot((x, y))
+            if hit:
+                print("ИИ попал!")
+            else:
+                print("ИИ промахнулся!")
+                player_turn = True
+
+    if player_board.all_sunk():
+        print("ИИ выиграл!")
+    else:
+        print("Игрок выиграл!")
+
+game()
